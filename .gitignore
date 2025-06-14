@@ -1,0 +1,11 @@
+# node modules and build artifacts
+node_modules/
+dist/
+
+# optional: OS & editor files
+.DS_Store
+*.log
+
+# optional: env files or keys
+.env
+.env.*

@@ -1,9 +1,10 @@
-import { startIntentMesh, onUpdate } from './index.js';
+import { init, userIntent } from "../dist/intentmesh.min.js";
 
+init({
+  priceSelectors: [".price"],
+  clickSelector: ".add-to-cart, .btn-cta",
+});
 
-startIntentMesh();
-
-onUpdate((state) => {
-  document.getElementById("status").textContent = 
-    `Detected: ${state.intent} (${state.buyer_tier}) – Confidence: ${state.confidence}`;
+window.addEventListener("beforeunload", () => {
+  console.log("Final intent snapshot:", userIntent);
 });

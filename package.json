@@ -1,0 +1,26 @@
+{
+  "name": "intentmesh-sdk",
+  "version": "1.0.0",
+  "description": "A lightweight JavaScript SDK to detect real-time shopper intent and spending behavior for e-commerce personalization.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "rollup -c rollup.config.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronoc160/intentmesh-sdk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ronoc160/intentmesh-sdk/issues"
+  },
+  "homepage": "https://github.com/ronoc160/intentmesh-sdk#readme",
+  "devDependencies": {
+    "rollup": "^4.43.0"
+  }
+}
