@@ -13,7 +13,7 @@ A lightweight JavaScript SDK that tracks user behavior on e-commerce sites to in
   - Intent level (`low`, `medium`, `high`)
   - Buyer tier (`budget`, `mid`, `premium`)
 - Configurable via `init(config)`
-- Sends signals to an external API (optional )
+- Sends signals to an external API (optional)
 
 ## 🚀 Getting Started
 
