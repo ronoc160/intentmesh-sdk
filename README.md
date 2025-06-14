@@ -1,18 +1,39 @@
-# IntentMesh SDK
+# 🧠 IntentMesh SDK
 
-A lightweight JavaScript SDK to detect real-time shopper intent and spending behavior for e-commerce personalization.
+A lightweight JavaScript SDK that tracks user behavior on e-commerce sites to infer intent and buyer tier — before they buy.
 
-## Features
-- Tracks scroll, click, and time-based behavior
-- Outputs buyer_tier and intent tags
-- Cookie-free, privacy-first design
+## 🔍 Features
+
+- Tracks:
+  - Scroll depth
+  - Time on page
+  - Price ranges viewed
+  - Clicked elements
+- Calculates:
+  - Intent level (`low`, `medium`, `high`)
+  - Buyer tier (`budget`, `mid`, `premium`)
+- Configurable via `init(config)`
+- Sends signals to an external API (optional)
+
+## 🚀 Getting Started
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/YOUR_USERNAME/intentmesh-sdk.git
+cd intentmesh-sdk
+npm install
 
 ## Usage
-```javascript
-import { startIntentMesh, onUpdate } from './src/index.js';
+<script src="dist/intentmesh.min.js"></script>
+<script>
+  IntentMesh.init({
+    priceSelectors: [".product-price"],
+    clickSelectors: ["button", ".add-to-cart"],
+    setBuyerTierFromPrices: (prices) => {
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+      return avg > 200 ? "luxury" : "mid";
+    },
+  });
+</script>
 
-startIntentMesh();
-onUpdate((state) => {
-  console.log(state); // { buyer_tier: "budget", intent: "browsing", confidence: 0.85 }
-});
-```
