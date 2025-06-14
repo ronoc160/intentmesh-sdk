@@ -13,7 +13,7 @@ A lightweight JavaScript SDK that tracks user behavior on e-commerce sites to in
   - Intent level (`low`, `medium`, `high`)
   - Buyer tier (`budget`, `mid`, `premium`)
 - Configurable via `init(config)`
-- Sends signals to an external API (optional)
+- Sends signals to an external API (optional )
 
 ## 🚀 Getting Started
 
@@ -23,6 +23,7 @@ A lightweight JavaScript SDK that tracks user behavior on e-commerce sites to in
 git clone https://github.com/YOUR_USERNAME/intentmesh-sdk.git
 cd intentmesh-sdk
 npm install
+npm run build
 
 ## Usage
 <script src="dist/intentmesh.min.js"></script>
@@ -37,3 +38,6 @@ npm install
   });
 </script>
 
+
+## API coming soon
+We'll be capturing session intent data via a Node/Express backend for later analysis and personalization.
