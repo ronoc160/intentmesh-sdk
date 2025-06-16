@@ -32,7 +32,7 @@ function calculateIntentScore() {
 }
 
 function trackScrollDepth() {
-   console.log("🚀 trackScrollDepth() attached");
+   console.log("🚀 trackScrollDepth() a attached");
   function calculateScrollDepth() {
     const scrollTop = window.scrollY;
     const docHeight =
