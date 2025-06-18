@@ -13,3 +13,5 @@ dist/
 *.log
 *.jsonl
 data/
+# .gitignore
+/dist/env.js

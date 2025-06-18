@@ -3,8 +3,8 @@ import { init, userIntent, buyerTier, intentLevel } from "./intentmesh.min.js";
 // 1. Start the SDK
 init({
   priceSelectors: [".price"],
-  clickSelectors: [".add-to-cart", ".btn-cta"], // ← fixed typo: was `clickSelector`
-  apiKey: "sk_test_9d8c3e01f128abc123456789",
+  clickSelectors: [".add-to-cart", ".btn-cta"],
+  apiKey: window.ENV?.API_KEY,
 });
 
 // 2. Rule-based UI behavior
