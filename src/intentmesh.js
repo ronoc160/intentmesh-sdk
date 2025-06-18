@@ -7,9 +7,20 @@ let userIntent = {
 let buyerTier = "unknown";
 let customTierFn = null; // Custom function to determine buyer tier
 let intentLevel = "unknown";
+let sdkApiKey = null;
+let userIdentity = {
+  id: null,
+  isCustom: false,
+};
+let intentChangeCallbacks = [];
 
+function onIntentChange(callback) {
+  if (typeof callback === "function") {
+    intentChangeCallbacks.push(callback);
+  }
+}
 function calculateIntentScore() {
- let score = 0;
+  let score = 0;
 
   // Add points for scroll depth
   if (userIntent.scrollDepth >= 75) score += 2;
@@ -26,13 +37,39 @@ function calculateIntentScore() {
   // Final classification
   if (score >= 5) intentLevel = "high";
   else if (score >= 3) intentLevel = "medium";
-  else intentLevel = "low";
 
-  console.log(`🧠 Intent Score: ${score} → ${intentLevel}`);
+  fetch("http://localhost:3001/api/track", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": sdkApiKey,
+    },
+    body: JSON.stringify({
+      userId: userIdentity.id, // ← this is required
+      sessionId: userIntent.sessionId, // optional
+      isCustom: userIdentity.isCustom,
+      userIntent,
+      buyerTier,
+      intentLevel,
+      timestamp: new Date().toISOString(),
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => console.log("✅ Sent to API:", data))
+    .catch((err) => console.error("❌ API error:", err));
+
+  if (intentLevel !== previousIntent) {
+    const payload = {
+      intentLevel,
+      buyerTier,
+      userIntent,
+    };
+    intentChangeCallbacks.forEach((cb) => cb(payload));
+  }
 }
 
 function trackScrollDepth() {
-   console.log("🚀 trackScrollDepth() a attached");
+  console.log("🚀 trackScrollDepth() a attached");
   function calculateScrollDepth() {
     const scrollTop = window.scrollY;
     const docHeight =
@@ -50,21 +87,19 @@ function trackScrollDepth() {
 }
 
 function trackClicks(config = {}) {
-  const selector = config.clickSelectors || [
-    "a",
-    "button",
-  ];
+  const selectors = config.clickSelectors || ["a", "button"];
 
   document.addEventListener("click", (e) => {
-    const target = e.target.closest(selector);
-    
-    if (target) {
-      const label =
-        target.innerText?.trim() ||
-        target.getAttribute("aria-label")?.trim() ||
-        "unknown";
-
-      userIntent.clickedElements.push(label);
+    for (const selector of selectors) {
+      const target = e.target.closest(selector);
+      if (target) {
+        const label =
+          target.innerText?.trim() ||
+          target.getAttribute("aria-label")?.trim() ||
+          "unknown";
+        userIntent.clickedElements.push(label);
+        break; // Stop after first match
+      }
     }
   });
 }
@@ -152,9 +187,34 @@ function trackPriceView() {
     setTimeout(scanPrices, 1000);
   }
 }
-
+function getOrCreateAnonymousId() {
+  let id = localStorage.getItem("intentmesh-anon-id");
+  if (!id) {
+    id = generateUUID();
+    localStorage.setItem("intentmesh-anon-id", id);
+  }
+  return id;
+}
+function generateUUID() {
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+    (
+      c ^
+      (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+    ).toString(16)
+  );
+}
 function init(config = {}) {
   console.log("✅ IntentMesh SDK initialized");
+  sdkApiKey = config.apiKey || null;
+  if (config.userId) {
+    userIdentity.id = config.userId;
+    userIdentity.isCustom = true;
+  } else {
+    userIdentity.id = getOrCreateAnonymousId();
+    userIdentity.isCustom = false;
+  }
+
+  userIntent.sessionId = generateUUID();
 
   if (
     config.setBuyerTierFromPrices &&
