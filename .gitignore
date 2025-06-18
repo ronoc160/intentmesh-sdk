@@ -9,3 +9,7 @@ dist/
 # optional: env files or keys
 .env
 .env.*
+# Log files
+*.log
+*.jsonl
+data/

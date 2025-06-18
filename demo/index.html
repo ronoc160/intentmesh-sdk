@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,43 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IntentMesh Demo Store</title>
   <style>
-    body { font-family: sans-serif; margin: 2rem; background: #f9f9f9; color: #333; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-    .product { border-bottom: 1px solid #eee; padding: 1rem 0; }
-    .product:last-child { border-bottom: none; }
-    .price { font-weight: bold; margin-top: 0.5rem; color: #2d6a4f; }
-    button { margin-top: 1rem; padding: 0.5rem 1rem; background: #2d6a4f; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #1b4332; }
-    .checkout { text-align: right; margin-top: 2rem; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      background: #f2f2f2;
+      color: #333;
+    }
+
+    header {
+      background: #2d6a4f;
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    .banner {
+      background: #ffe66d;
+      padding: 1rem;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: auto;
+      padding: 2rem 1rem;
+      gap: 2rem;
+    }
+
+    .products {
+      flex: 3;
+    }
+
+    .cart-sidebar {
+      flex: 1;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+      height: fit-content;
+    }
+
+    .product {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.03);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .product img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .product h2 {
+      margin: 0.5rem 0 0.2rem;
+    }
+
+    .price {
+      color: #1b4332;
+      font-weight: bold;
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+
+    button {
+      background: #2d6a4f;
+      color: white;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1b4332;
+    }
+
+    .checkout {
+      text-align: right;
+      margin-top: 2rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: #e6e6e6;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <header>
     <h1>🛒 IntentMesh Demo Store</h1>
-    <p>Click around and explore for tracking demo purposes.</p>
+    <p>Explore products and interact to generate intent data.</p>
+  </header>
 
-    <div class="product">
-      <h2>Basic Sneakers</h2>
-      <p class="price">€39.99</p>
-      <button class="add-to-cart">Add to Cart</button>
+  <div class="banner">
+    🎉 Free shipping on orders over €100 – This weekend only!
+  </div>
+
+  <div class="container">
+    <div class="products">
+      <div class="product">
+        <img src="https://via.placeholder.com/600x300?text=Basic+Sneakers" alt="Basic Sneakers" />
+        <h2>Basic Sneakers</h2>
+        <p class="price">€39.99</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+
+      <div class="product">
+        <img src="https://via.placeholder.com/600x300?text=Running+Shoes" alt="Midrange Running Shoes" />
+        <h2>Midrange Running Shoes</h2>
+        <p class="price">€89.00</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+
+      <div class="product">
+        <img src="https://via.placeholder.com/600x300?text=Premium+Trainers" alt="Premium Trainers" />
+        <h2>Premium Trainers</h2>
+        <p class="price">€199.99</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+
+      <div class="product">
+        <img src="https://via.placeholder.com/600x300?text=Luxury+Edition" alt="Luxury Edition" />
+        <h2>Limited Edition High-Tops</h2>
+        <p class="price">€349.00</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+
+      <div class="checkout">
+        <button class="btn-cta">Proceed to Checkout</button>
+      </div>
     </div>
 
-    <div class="product">
-      <h2>Midrange Running Shoes</h2>
-      <p class="price">€89.00</p>
-      <button class="add-to-cart">Add to Cart</button>
-    </div>
-
-    <div class="product">
-      <h2>Premium Trainers</h2>
-      <p class="price">€199.99</p>
-      <button class="add-to-cart">Add to Cart</button>
-    </div>
-
-    <div class="checkout">
-      <button class="btn-cta">Proceed to Checkout</button>
+    <div class="cart-sidebar">
+      <h3>🧺 Your Cart</h3>
+      <p>No items yet. Add products to see intent tracking in action.</p>
     </div>
   </div>
+
+  <footer>
+    <p>IntentMesh Demo &copy; 2025</p>
+  </footer>
+
   <script type="module" src="./demo.js"></script>
 </body>
 </html>
