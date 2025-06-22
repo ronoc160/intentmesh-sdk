@@ -11,12 +11,19 @@ const app = express();
 app.use(express.json());
 app.options("*", cors());
 // 🔒 Restrict CORS to known origins (customize this as needed)
+const allowedOrigins = ["http://localhost:3000", "http://192.168.0.208:3000"];
+
 app.use(
   cors({
-    origin: "http://192.168.0.208:3000", // ✅ your frontend's origin
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "x-api-key"],
-    credentials: false,
   })
 );
 
@@ -72,6 +79,36 @@ app.get("/users/:id", (req, res) => {
     return res.status(404).json({ error: "User not found" });
   }
   res.json({ events: data });
+});
+app.get("/api/heatmap", verifyApiKey, async (req, res) => {
+  const { userId, sessionId } = req.query;
+  const filePath = "./data/heatmap.jsonl";
+  const results = [];
+
+  if (!userId || !sessionId) {
+    return res.status(400).json({ error: "Missing userId or sessionId" });
+  }
+
+  try {
+    const fileStream = fs.createReadStream(filePath);
+    const rl = readline.createInterface({ input: fileStream });
+
+    for await (const line of rl) {
+      try {
+        const event = JSON.parse(line);
+        if (event.userId === userId && event.sessionId === sessionId) {
+          results.push(...(event.clicks || []));
+        }
+      } catch {
+        // skip bad lines silently
+      }
+    }
+
+    res.json({ clicks: results });
+  } catch (err) {
+    console.error("❌ Error reading heatmap log:", err);
+    res.status(500).json({ error: "Failed to read heatmap log" });
+  }
 });
 
 // 📊 Aggregate stats

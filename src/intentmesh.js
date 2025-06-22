@@ -1,3 +1,5 @@
+import { initHeatmap } from "./heatMap.js";
+
 let userIntent = {
   scrollDepth: 0,
   timeOnPage: 0,
@@ -5,13 +7,18 @@ let userIntent = {
   clickedElements: [],
 };
 let buyerTier = "unknown";
-let customTierFn = null; // Custom function to determine buyer tier
+let customTierFn = null;
 let intentLevel = "unknown";
+let previousIntent = null;
 let sdkApiKey = null;
+let heatMapClicks = [];
+let clickBuffer = [];
+
 let userIdentity = {
   id: null,
   isCustom: false,
 };
+
 let intentChangeCallbacks = [];
 
 function onIntentChange(callback) {
@@ -19,24 +26,30 @@ function onIntentChange(callback) {
     intentChangeCallbacks.push(callback);
   }
 }
+
 function calculateIntentScore() {
   let score = 0;
 
-  // Add points for scroll depth
   if (userIntent.scrollDepth >= 75) score += 2;
   else if (userIntent.scrollDepth >= 40) score += 1;
 
-  // Add points for time on page
   if (userIntent.timeOnPage >= 60) score += 2;
   else if (userIntent.timeOnPage >= 30) score += 1;
 
-  // Add points for meaningful clicks
   if (userIntent.clickedElements.length >= 3) score += 2;
   else if (userIntent.clickedElements.length >= 1) score += 1;
 
-  // Final classification
-  if (score >= 5) intentLevel = "high";
-  else if (score >= 3) intentLevel = "medium";
+  intentLevel = score >= 5 ? "high" : score >= 3 ? "medium" : "low";
+
+  if (intentLevel !== previousIntent) {
+    const payload = {
+      intentLevel,
+      buyerTier,
+      userIntent,
+    };
+    intentChangeCallbacks.forEach((cb) => cb(payload));
+    previousIntent = intentLevel;
+  }
 
   fetch("http://localhost:3001/api/track", {
     method: "POST",
@@ -45,8 +58,8 @@ function calculateIntentScore() {
       "x-api-key": sdkApiKey,
     },
     body: JSON.stringify({
-      userId: userIdentity.id, // ← this is required
-      sessionId: userIntent.sessionId, // optional
+      userId: userIdentity.id,
+      sessionId: userIntent.sessionId,
       isCustom: userIdentity.isCustom,
       userIntent,
       buyerTier,
@@ -57,59 +70,106 @@ function calculateIntentScore() {
     .then((res) => res.json())
     .then((data) => console.log("✅ Sent to API:", data))
     .catch((err) => console.error("❌ API error:", err));
-
-  if (intentLevel !== previousIntent) {
-    const payload = {
-      intentLevel,
-      buyerTier,
-      userIntent,
-    };
-    intentChangeCallbacks.forEach((cb) => cb(payload));
-  }
 }
 
 function trackScrollDepth() {
-  console.log("🚀 trackScrollDepth() a attached");
-  function calculateScrollDepth() {
+  window.addEventListener("scroll", () => {
     const scrollTop = window.scrollY;
-    const docHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
-    const scrollPercent = Math.min(
-      100,
-      Math.round((scrollTop / docHeight) * 100)
-    );
-
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPercent = Math.min(100, Math.round((scrollTop / docHeight) * 100));
     userIntent.scrollDepth = scrollPercent;
-    console.log(`📊 Scroll Depth: ${scrollPercent}%`);
-  }
+  });
+}
 
-  window.addEventListener("scroll", calculateScrollDepth);
+function trackClickHeatmap() {
+  document.addEventListener("click", (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    heatMapClicks.push({
+      xPercent: (x / w).toFixed(3),
+      yPercent: (y / h).toFixed(3),
+      timestamp: Date.now(),
+    });
+  });
+
+  setInterval(() => {
+    if (heatMapClicks.length === 0 || !userIdentity.id) return;
+
+    const payload = {
+      userId: userIdentity.id,
+      sessionId: userIntent.sessionId,
+      clicks: [...heatMapClicks],
+    };
+
+    heatMapClicks = [];
+
+    fetch("http://localhost:3001/api/heatmap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": sdkApiKey,
+      },
+      body: JSON.stringify(payload),
+    }).then((res) => res.ok && console.log("📍 Heatmap sent"));
+  }, 5000);
 }
 
 function trackClicks(config = {}) {
   const selectors = config.clickSelectors || ["a", "button"];
 
   document.addEventListener("click", (e) => {
-    for (const selector of selectors) {
-      const target = e.target.closest(selector);
-      if (target) {
-        const label =
-          target.innerText?.trim() ||
-          target.getAttribute("aria-label")?.trim() ||
-          "unknown";
-        userIntent.clickedElements.push(label);
-        break; // Stop after first match
-      }
-    }
+    const label =
+      e.target.closest(selectors.join(","))?.innerText?.trim() ||
+      e.target.getAttribute("aria-label")?.trim() ||
+      e.target.tagName;
+
+    if (label) userIntent.clickedElements.push(label);
+
+    clickBuffer.push({
+      x: e.clientX,
+      y: e.clientY,
+      timestamp: Date.now(),
+      label,
+    });
+
+    if (clickBuffer.length >= 20) flushClicks();
   });
 }
 
+function flushClicks(useBeacon = false) {
+  if (clickBuffer.length === 0) return;
+
+  const payload = {
+    userId: userIdentity.id,
+    sessionId: userIntent.sessionId,
+    clicks: [...clickBuffer],
+    timestamp: new Date().toISOString(),
+  };
+
+  clickBuffer = [];
+
+  if (useBeacon && navigator.sendBeacon) {
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    navigator.sendBeacon("http://localhost:3001/api/heatmap", blob);
+  } else {
+    fetch("http://localhost:3001/api/heatmap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": sdkApiKey,
+      },
+      body: JSON.stringify(payload),
+    }).catch((err) => console.warn("❌ Heatmap flush error:", err));
+  }
+}
+
+setInterval(() => flushClicks(false), 5000);
+window.addEventListener("beforeunload", () => flushClicks(true));
+
 function trackTimeOnPage() {
-  console.log("⏳ trackTimeOnPage() started");
-  // Continuously tracks how long a user stays on the page
-  // Updates userIntent.timeOnPage in a non-blocking way
-  // Only logs/sends updates every 5s (you can change this)
-  // Sends one last snapshot when the user leaves
   let startTime = Date.now();
   let lastLogged = 0;
 
@@ -118,14 +178,10 @@ function trackTimeOnPage() {
     const elapsed = Math.floor((now - startTime) / 1000);
     userIntent.timeOnPage = elapsed;
 
-    // Optional batching every 5s
     if (elapsed - lastLogged >= 5) {
       lastLogged = elapsed;
-      // example: store or send to API
-      // sendIntentUpdate({ timeOnPage: elapsed });
     }
 
-    // Schedule next update
     if ("requestIdleCallback" in window) {
       requestIdleCallback(updateTime, { timeout: 1000 });
     } else {
@@ -136,13 +192,12 @@ function trackTimeOnPage() {
   updateTime();
 
   window.addEventListener("beforeunload", () => {
-    const finalTime = Math.floor((Date.now() - startTime) / 1000);
-    userIntent.timeOnPage = finalTime;
+    userIntent.timeOnPage = Math.floor((Date.now() - startTime) / 1000);
     calculateIntentScore();
   });
 }
 
-let priceSelectors = []; // ← override via config
+let priceSelectors = [];
 
 function trackPriceView() {
   const priceRegex = /(?:€|\$|£)\s?(\d{1,5}(?:[.,]\d{2})?)/g;
@@ -159,7 +214,7 @@ function trackPriceView() {
         });
       });
     } else {
-      textToScan = document.body.innerText; // fallback
+      textToScan = document.body.innerText;
     }
 
     let match;
@@ -187,6 +242,7 @@ function trackPriceView() {
     setTimeout(scanPrices, 1000);
   }
 }
+
 function getOrCreateAnonymousId() {
   let id = localStorage.getItem("intentmesh-anon-id");
   if (!id) {
@@ -195,6 +251,7 @@ function getOrCreateAnonymousId() {
   }
   return id;
 }
+
 function generateUUID() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
     (
@@ -203,9 +260,11 @@ function generateUUID() {
     ).toString(16)
   );
 }
+
 function init(config = {}) {
   console.log("✅ IntentMesh SDK initialized");
   sdkApiKey = config.apiKey || null;
+
   if (config.userId) {
     userIdentity.id = config.userId;
     userIdentity.isCustom = true;
@@ -216,10 +275,7 @@ function init(config = {}) {
 
   userIntent.sessionId = generateUUID();
 
-  if (
-    config.setBuyerTierFromPrices &&
-    typeof config.setBuyerTierFromPrices === "function"
-  ) {
+  if (typeof config.setBuyerTierFromPrices === "function") {
     customTierFn = config.setBuyerTierFromPrices;
   }
 
@@ -228,14 +284,16 @@ function init(config = {}) {
   }
 
   trackScrollDepth();
-  trackPriceView(); // uses selectors (if any)
+  trackPriceView();
   trackTimeOnPage();
   trackClicks(config);
+  trackClickHeatmap();
+  initHeatmap?.(userIdentity.id, userIntent.sessionId, sdkApiKey);
 }
+
 setInterval(() => {
   calculateIntentScore();
   console.log("Live:", userIntent, buyerTier, intentLevel);
 }, 3000);
 
-// 🔁 Exports
-export { init, userIntent, buyerTier, intentLevel };
+export { init, userIntent, buyerTier, intentLevel, onIntentChange };
