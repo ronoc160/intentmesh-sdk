@@ -12,6 +12,7 @@ A lightweight JavaScript SDK + Node backend that tracks user behavior on e-comme
 - Time on page  
 - Price ranges viewed  
 - Clicked elements  
+- Click heatmap: X/Y position of clicks across the page
 
 ### Calculates:
 
@@ -67,6 +68,13 @@ npx serve public
   });
 </script>
 ```
+
+## 🖱️ Heatmap Tracking
+
+The SDK automatically tracks click locations and sends them to /api/heatmap. You can later render this data visually on your dashboard.
+
+No additional setup is needed — just pass your apiKey and the SDK does the rest.
+
 ## 📦 Captured Data Format
 
 ```bash
@@ -84,6 +92,5 @@ npx serve public
   "timestamp": "2025-06-18T10:00:00Z"
 }
 ```
-
 
 
