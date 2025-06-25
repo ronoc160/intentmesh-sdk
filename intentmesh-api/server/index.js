@@ -7,7 +7,7 @@ import intentRoutes from "./routes/intent.js";
 import heatmapRoutes from "./routes/heatmap.js";
 import statsRoutes from "./routes/stats.js";
 import userRoutes from "./routes/users.js";
-
+import authRoutes from "./routes/auth.js";
 dotenv.config();
 
 const app = express();
@@ -31,6 +31,7 @@ app.use("/api", intentRoutes);
 app.use("/api", heatmapRoutes);
 app.use("/", statsRoutes);
 app.use("/", userRoutes);
+app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

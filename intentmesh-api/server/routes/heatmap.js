@@ -2,9 +2,11 @@ import express from "express";
 import fs from "fs";
 import readline from "readline";
 import verifyApiKey from "../middleware/verifyApiKey.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
+// 🔥 POST heatmap data
 router.post("/heatmap", verifyApiKey, (req, res) => {
   const data = req.body;
   if (!data?.userId || !data.clicks) {
@@ -20,7 +22,8 @@ router.post("/heatmap", verifyApiKey, (req, res) => {
   }
 });
 
-router.get("/heatmap", verifyApiKey, async (req, res) => {
+// 📈 GET heatmap data (authenticated dashboard access)
+router.get("/heatmap", verifyApiKey, verifyToken, async (req, res) => {
   const { userId, sessionId } = req.query;
   if (!userId || !sessionId) {
     return res.status(400).json({ error: "Missing userId or sessionId" });
