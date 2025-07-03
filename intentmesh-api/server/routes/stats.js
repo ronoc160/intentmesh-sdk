@@ -1,11 +1,13 @@
+// routes/stats.js
 import express from "express";
 import fs from "fs";
 import readline from "readline";
-import verifyApiKey from "../middleware/verifyApiKey.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-router.get("/stats", verifyApiKey, async (req, res) => {
+router.get("/stats", verifyToken, async (req, res) => {
+  const userApiKey = req.user.apiKey;
   const summary = {
     total: 0,
     intentLevel: { high: 0, medium: 0, low: 0 },
@@ -13,28 +15,32 @@ router.get("/stats", verifyApiKey, async (req, res) => {
   };
 
   try {
-    const fileStream = fs.createReadStream("./data/intent.log.jsonl");
-    const rl = readline.createInterface({ input: fileStream });
+    const rl = readline.createInterface({
+      input: fs.createReadStream("./server/data/intent.log.jsonl"),
+    });
 
     for await (const line of rl) {
       try {
-        const data = JSON.parse(line);
+        const event = JSON.parse(line);
+        // Match entries by apiKey
+        if (event.apiKey !== userApiKey) continue;
+
         summary.total++;
-        if (data.intentLevel)
-          summary.intentLevel[data.intentLevel] =
-            (summary.intentLevel[data.intentLevel] || 0) + 1;
-        if (data.buyerTier)
-          summary.buyerTier[data.buyerTier] =
-            (summary.buyerTier[data.buyerTier] || 0) + 1;
-      } catch {
+        if (event.intentLevel)
+          summary.intentLevel[event.intentLevel] =
+            (summary.intentLevel[event.intentLevel] || 0) + 1;
+        if (event.buyerTier)
+          summary.buyerTier[event.buyerTier] =
+            (summary.buyerTier[event.buyerTier] || 0) + 1;
+      } catch (err) {
         // skip malformed lines
       }
     }
 
     res.json(summary);
   } catch (err) {
-    console.error("❌ Stats read error:", err);
-    res.status(500).json({ error: "Unable to read stats" });
+    console.error("❌ Stats error:", err);
+    res.status(500).json({ error: "Failed to load stats" });
   }
 });
 
