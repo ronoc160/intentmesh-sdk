@@ -65,6 +65,7 @@ function calculateIntentScore() {
       buyerTier,
       intentLevel,
       timestamp: new Date().toISOString(),
+      apiKey: sdkApiKey,
     }),
   })
     .then((res) => res.json())
