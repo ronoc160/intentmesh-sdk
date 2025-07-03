@@ -7,7 +7,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/' },
-      { text: 'Dashboard', link: 'http://intentmesh.ai/' }
+      { text: 'Dashboard', link: 'http://intentmesh.ai' }
     ],
     logo: '/logo.svg',
   }
