@@ -36,6 +36,7 @@ function flushClicks(userId, sessionId, apiKey) {
       sessionId,
       heatmap: heatmapData,
       timestamp: new Date().toISOString(),
+      
     }),
   }).then(() => {
     clickMap = {}; // reset

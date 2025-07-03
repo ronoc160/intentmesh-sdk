@@ -4,8 +4,9 @@ import { init, userIntent, buyerTier, intentLevel } from "./intentmesh.min.js";
 init({
   priceSelectors: [".price"],
   clickSelectors: [".add-to-cart", ".btn-cta"],
-  apiKey: window.ENV?.API_KEY,
+  apiKey: "sk_5bb4bf46fdf757a10f2b6f8881f5e3da0465eeb5dd929d46",
 });
+
 
 // 2. Rule-based UI behavior
 const engagementRules = [
